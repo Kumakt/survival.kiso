@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>生存時間解析モデルの流れ</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="site_style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h2 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h3 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h4 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h5 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h6 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Rによる生存時間解析の基本</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">生存時間解析の実装</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">生存時間解析モデルの流れ</h1>
+
+</div>
+
+
+<div id="目次" class="section level2">
+<h2>目次</h2>
+<div id="パッケージの読み込み" class="section level3">
+<h3>パッケージの読み込み</h3>
+<ul>
+<li>まずパッケージを読み込む</li>
+</ul>
+<pre class="r"><code># パッケージの読み込み
+library(survival)
+library(magrittr)</code></pre>
+</div>
+<div id="データの確認" class="section level3">
+<h3>データの確認</h3>
+<ul>
+<li><p>summary関数とstr関数を用いる。</p></li>
+<li><p>必要に応じてグラフなどを書いてデータの分布を調べる。</p></li>
+</ul>
+<pre class="r"><code>summary(myeloid)</code></pre>
+<pre><code>##        id            trt            sex         futime           death       
+##  Min.   :  1.0   Length:646         f:361   Min.   :   4.0   Min.   :0.0000  
+##  1st Qu.:162.2   Class :character   m:285   1st Qu.: 286.5   1st Qu.:0.0000  
+##  Median :323.5   Mode  :character           Median : 817.0   Median :0.0000  
+##  Mean   :323.5                              Mean   :1010.1   Mean   :0.4954  
+##  3rd Qu.:484.8                              3rd Qu.:1733.2   3rd Qu.:1.0000  
+##  Max.   :646.0                              Max.   :2419.0   Max.   :1.0000  
+##                                                                              
+##      txtime           crtime          rltime      
+##  Min.   :  24.0   Min.   : 21.0   Min.   :  26.0  
+##  1st Qu.: 105.0   1st Qu.: 32.0   1st Qu.: 181.5  
+##  Median : 147.0   Median : 39.0   Median : 283.0  
+##  Mean   : 229.3   Mean   : 50.1   Mean   : 363.3  
+##  3rd Qu.: 244.2   3rd Qu.: 57.0   3rd Qu.: 470.0  
+##  Max.   :1526.0   Max.   :554.0   Max.   :1905.0  
+##  NA&#39;s   :282      NA&#39;s   :192     NA&#39;s   :420</code></pre>
+<pre class="r"><code>head(myeloid, n = 10)</code></pre>
+<div class="kable-table">
+<table>
+<thead>
+<tr class="header">
+<th align="right">id</th>
+<th align="left">trt</th>
+<th align="left">sex</th>
+<th align="right">futime</th>
+<th align="right">death</th>
+<th align="right">txtime</th>
+<th align="right">crtime</th>
+<th align="right">rltime</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">B</td>
+<td align="left">f</td>
+<td align="right">235</td>
+<td align="right">1</td>
+<td align="right">NA</td>
+<td align="right">44</td>
+<td align="right">113</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">A</td>
+<td align="left">m</td>
+<td align="right">286</td>
+<td align="right">1</td>
+<td align="right">200</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="left">A</td>
+<td align="left">f</td>
+<td align="right">1983</td>
+<td align="right">0</td>
+<td align="right">NA</td>
+<td align="right">38</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="left">B</td>
+<td align="left">f</td>
+<td align="right">2137</td>
+<td align="right">0</td>
+<td align="right">245</td>
+<td align="right">25</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="left">B</td>
+<td align="left">f</td>
+<td align="right">326</td>
+<td align="right">1</td>
+<td align="right">112</td>
+<td align="right">56</td>
+<td align="right">200</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="left">B</td>
+<td align="left">f</td>
+<td align="right">2041</td>
+<td align="right">0</td>
+<td align="right">102</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">7</td>
+<td align="left">A</td>
+<td align="left">m</td>
+<td align="right">63</td>
+<td align="right">1</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">8</td>
+<td align="left">A</td>
+<td align="left">f</td>
+<td align="right">446</td>
+<td align="right">1</td>
+<td align="right">205</td>
+<td align="right">34</td>
+<td align="right">382</td>
+</tr>
+<tr class="odd">
+<td align="right">9</td>
+<td align="left">B</td>
+<td align="left">f</td>
+<td align="right">1695</td>
+<td align="right">0</td>
+<td align="right">NA</td>
+<td align="right">28</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">10</td>
+<td align="left">A</td>
+<td align="left">f</td>
+<td align="right">1669</td>
+<td align="right">0</td>
+<td align="right">106</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+</div>
+<pre class="r"><code>str(myeloid)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    646 obs. of  8 variables:
+##  $ id    : int  1 2 3 4 5 6 7 8 9 10 ...
+##  $ trt   : chr  &quot;B&quot; &quot;A&quot; &quot;A&quot; &quot;B&quot; ...
+##  $ sex   : Factor w/ 2 levels &quot;f&quot;,&quot;m&quot;: 1 2 1 1 1 1 2 1 1 1 ...
+##  $ futime: num  235 286 1983 2137 326 ...
+##  $ death : num  1 1 0 0 1 0 1 1 0 0 ...
+##  $ txtime: num  NA 200 NA 245 112 102 NA 205 NA 106 ...
+##  $ crtime: num  44 NA 38 25 56 NA NA 34 28 NA ...
+##  $ rltime: num  113 NA NA NA 200 NA NA 382 NA NA ...</code></pre>
+<p>ここで使うデータは、パッケージに付属のデータ：白血病患者に対する治療のA/Bでの効果を調べるデータ</p>
+<ul>
+<li>id: subject identifier, 1-646,</li>
+<li>trt: treatment arm A or B,<br />
+</li>
+<li>sex: f=female, m=male,<br />
+</li>
+<li>futime: time to death or last follow-up,<br />
+</li>
+<li>death: 1 if futime is a death, 0 for censoring,<br />
+</li>
+<li>txtime: time to hematropetic stem cell transplant</li>
+<li>crtime: time to complete response, rltime: time to relapse of disease</li>
+</ul>
+<p>今回は治療A/Bと死亡までの差をみる</p>
+</div>
+<div id="生存時間解析の準備" class="section level3">
+<h3>生存時間解析の準備</h3>
+<pre class="r"><code>ge.surv &lt;- Surv(myeloid$futime, myeloid$death)
+head(ge.surv, n = 10)</code></pre>
+<pre><code>##  [1]  235   286  1983+ 2137+  326  2041+   63   446  1695+ 1669+</code></pre>
+<p>+はイベント打ち切り、無印はイベントがなかったことを示す</p>
+</div>
+<div id="カプランマイヤー法" class="section level3">
+<h3>カプランマイヤー法</h3>
+<ul>
+<li>ノンパラメトリック法による生存時間を当てはめる関数 survfit</li>
+<li>デフォルトはカプラン・マイヤー推定法</li>
+</ul>
+</div>
+<div id="生存曲線を描く" class="section level3">
+<h3>生存曲線を描く</h3>
+<pre class="r"><code>plot(ge.model,lty=1:2,xlab = &quot;Survival time&quot;, ylab = &quot;Overall survival&quot;, col = 1:2)%&gt;% legend(locator(1),c(&quot;A&quot;,&quot;B&quot;), lty=c(1,2))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>## 実際に描くときはlegendを併記するとグラフに追記できる</code></pre>
+<ul>
+<li>95%信頼区間の追記</li>
+</ul>
+<pre class="r"><code>plot(ge.model,conf.int = .95,lty=1:2) %&gt;%
+legend(locator(1),c(&quot;A&quot;,&quot;B&quot;), lty=c(1,2))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>ただし、信頼区間をつけるとグラフが読みにくくなる</p>
+</div>
+<div id="ログランク検定" class="section level3">
+<h3>ログランク検定</h3>
+<p>AとBによる生存曲線を比較する。</p>
+<pre class="r"><code>survdiff(Surv(myeloid$futime, myeloid$death) ~ myeloid$trt)</code></pre>
+<pre><code>## Call:
+## survdiff(formula = Surv(myeloid$futime, myeloid$death) ~ myeloid$trt)
+## 
+##                 N Observed Expected (O-E)^2/E (O-E)^2/V
+## myeloid$trt=A 317      171      143      5.28      9.59
+## myeloid$trt=B 329      149      177      4.29      9.59
+## 
+##  Chisq= 9.6  on 1 degrees of freedom, p= 0.002</code></pre>
+<p>帰無仮説は生存曲線に差がないというものである。今回の結果はp値=0.002であり生存曲線に差があるという結果になる</p>
+</div>
+<div id="cox比例ハザード" class="section level3">
+<h3>Cox比例ハザード</h3>
+<p>先に描いた生存曲線から比例ハザード性は保たれていると考えられる。</p>
+<pre class="r"><code>model.cox &lt;- coxph(Surv(futime, death) ~ trt + sex, data = myeloid)
+summary(model.cox)</code></pre>
+<pre><code>## Call:
+## coxph(formula = Surv(futime, death) ~ trt + sex, data = myeloid)
+## 
+##   n= 646, number of events= 320 
+## 
+##         coef exp(coef) se(coef)      z Pr(&gt;|z|)   
+## trtB -0.3582    0.6989   0.1129 -3.174  0.00151 **
+## sexm  0.1150    1.1219   0.1128  1.020  0.30782   
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##      exp(coef) exp(-coef) lower .95 upper .95
+## trtB    0.6989     1.4307    0.5602     0.872
+## sexm    1.1219     0.8913    0.8994     1.399
+## 
+## Concordance= 0.549  (se = 0.016 )
+## Likelihood ratio test= 10.56  on 2 df,   p=0.005
+## Wald test            = 10.53  on 2 df,   p=0.005
+## Score (logrank) test = 10.62  on 2 df,   p=0.005</code></pre>
+<p>係数をHRと95%信頼区間に変える</p>
+<pre class="r"><code>## 95%CI
+round(exp(confint(model.cox)),3)</code></pre>
+<pre><code>##      2.5 % 97.5 %
+## trtB 0.560  0.872
+## sexm 0.899  1.399</code></pre>
+<pre class="r"><code>## HR
+round(exp(coefficients(model.cox)),3)</code></pre>
+<pre><code>##  trtB  sexm 
+## 0.699 1.122</code></pre>
+<p>HR 0.699 (95%CI 0.560 - 0.872)という結果で、治療B群の方が死亡率を有意に低下させる。</p>
+</div>
+</div>
+
+<footer>
+  <p>Copyright &copy; 2020 Kumakt </p>
+</footer>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
