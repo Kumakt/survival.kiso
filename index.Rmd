@@ -1,0 +1,121 @@
+---
+title: "生存時間解析モデルの流れ"
+---
+
+## 目次
+
+
+### パッケージの読み込み
+
+- まずパッケージを読み込む
+
+```{r}
+# パッケージの読み込み
+library(survival)
+library(magrittr)
+```
+
+
+### データの確認
+
+- summary関数とstr関数を用いる。
+
+- 必要に応じてグラフなどを書いてデータの分布を調べる。
+
+
+
+```{r}
+summary(myeloid)
+head(myeloid, n = 10)
+str(myeloid)
+```
+
+
+ここで使うデータは、パッケージに付属のデータ：白血病患者に対する治療のA/Bでの効果を調べるデータ
+
+- id: subject identifier, 1-646, 
+- trt: treatment arm A or B,  
+- sex: f=female, m=male,  
+- futime: time to death or last follow-up,  
+- death:  1 if futime is a death, 0 for censoring,  
+- txtime: time to hematropetic stem cell transplant
+- crtime:  time to complete response,  rltime:  time to relapse of disease
+
+今回は治療A/Bと死亡までの差をみる
+
+
+### 生存時間解析の準備
+
+```{r}
+ge.surv <- Surv(myeloid$futime, myeloid$death)
+head(ge.surv, n = 10)
+```
+ 
++はイベント打ち切り、無印はイベントがなかったことを示す
+
+
+### カプランマイヤー法
+
+```{r include=FALSE}
+ge.model <-survfit(Surv(futime,death) ~ trt, data = myeloid)
+summary(ge.model)
+```
+
+
+- ノンパラメトリック法による生存時間を当てはめる関数 survfit
+- デフォルトはカプラン・マイヤー推定法
+
+
+### 生存曲線を描く
+
+```{r}
+plot(ge.model,lty=1:2,xlab = "Survival time", ylab = "Overall survival", col = 1:2)%>% legend(locator(1),c("A","B"), lty=c(1,2))
+
+## 実際に描くときはlegendを併記するとグラフに追記できる
+```
+
+
+- 95%信頼区間の追記
+
+```{r}
+plot(ge.model,conf.int = .95,lty=1:2) %>%
+legend(locator(1),c("A","B"), lty=c(1,2))
+```
+
+
+ただし、信頼区間をつけるとグラフが読みにくくなる
+
+
+### ログランク検定
+
+AとBによる生存曲線を比較する。
+
+```{r}
+survdiff(Surv(myeloid$futime, myeloid$death) ~ myeloid$trt)
+```
+
+
+帰無仮説は生存曲線に差がないというものである。今回の結果はp値=0.002であり生存曲線に差があるという結果になる
+
+### Cox比例ハザード
+
+先に描いた生存曲線から比例ハザード性は保たれていると考えられる。
+
+```{r}
+model.cox <- coxph(Surv(futime, death) ~ trt + sex, data = myeloid)
+summary(model.cox)
+```
+
+
+係数をHRと95%信頼区間に変える
+
+
+```{r}
+## 95%CI
+round(exp(confint(model.cox)),3)
+## HR
+round(exp(coefficients(model.cox)),3)
+```
+
+
+HR 0.699 (95%CI 0.560 - 0.872)という結果で、治療B群の方が死亡率を有意に低下させる。
